@@ -1,0 +1,400 @@
+//CSE674 HW7
+//Due : Dec. 11 (Tuesday) at 11 : 59pm
+//points : 35
+#include <iostream>
+#include <vector>
+#include<algorithm>
+using namespace std;
+class node {
+
+public:
+	vector<int> value;  //the size of value vector determine the number of values in the node, which can be 1 to 3
+	node * parent;
+	vector<node *> child;  //the size of child vector determine the number of child nodes, which can be 2 to 4.
+	int child_state; //a node can have up to 4 child nodes: child 0, 1, 2, 3.  child_state i (0 ... 3) means this node is child i of its parent
+	node() { parent = nullptr; }
+	void add_value(int k);  //add value to a node of less than 3 value; this will be used by the add member funciton of two34_tree
+
+};
+class two34_tree {
+public:
+	node * root;
+	two34_tree() { root = nullptr; }
+	void add(int k);
+	//during search for a node to add value, if a tie occurrs and the search can go toward multiple child branches, pick the child node
+	//with a minimum nomber of values. If there are still ties,  pick the right-most branch among those with minumum number of values.
+	void break_3_value_node(node * p); //to be invoked by add
+	void in_order_traversal(node * p);
+};
+void node::add_value(int k)
+{
+	value.push_back(k);
+	sort(value.begin(), value.end());
+}
+void two34_tree::add(int k)
+{
+	if (root == nullptr)
+	{
+		node * temp = new node();
+		temp->value.push_back(k);
+		temp->parent = nullptr;
+		temp->child_state = 0;
+		root = temp;
+	}
+	else
+	{
+		node * pos = root;
+		int flag = 0;
+		while (pos != nullptr)
+		{
+			if (pos->value.size() < 3 && pos->child.size() == 0)
+			{
+				pos->value.push_back(k);
+				sort(pos->value.begin(), pos->value.end());
+				if (pos->value.size() == 3 && pos == root)
+				{
+					break_3_value_node(pos);
+				}
+				break;
+			}
+			if (pos->value.size() == 1)
+			{
+				int count = 0;
+				if (k < pos->value[0])
+				{
+					if (pos->child_state == 0 && count != 1) // add value
+					{
+						pos->add_value(k);
+						break;
+					}
+					else
+					{
+						pos = pos->child[0];
+						count = 1;//right_child
+					}
+				}
+				if (count != 1)
+				{
+					if (k >= pos->value[0] && count != 1)
+					{
+						if (pos->child_state == 0)
+						{
+							pos->add_value(k);
+							break;//add value
+						}
+						else
+						{
+							pos = pos->child[1];
+							count = 1;
+						}
+					}
+				}
+			}
+			if (pos->value.size() == 2)
+			{
+				int count = 0;
+				if (k < pos->value[0])
+				{
+					if (pos->child_state == 0 && count != 1)
+					{
+						pos->add_value(k);//add
+						break;
+					}
+					else
+					{
+						pos = pos->child[0];
+						count = 1;
+					}
+				}
+				if (count != 1)
+				{
+					if (pos->value[0] <= k && k < pos->value[1] && count != 1)
+					{
+						if (pos->child_state == 0)
+						{
+							pos->add_value(k);//add
+							break;
+						}
+						else
+						{
+							pos = pos->child[1];
+							count = 1;
+						}
+					}
+				}
+
+				if (count != 1)
+				{
+					if (k >= pos->value[1] && count != 1)
+					{
+						if (pos->child_state == 0)
+						{
+							pos->add_value(k);//add
+							break;
+						}
+						else
+						{
+							pos = pos->child[2];
+							count = 1;
+						}
+					}
+				}
+			}
+			if (pos->value.size() == 3 && flag == 0)
+			{
+				break_3_value_node(pos);
+				flag = 1;
+				pos = root;
+			}
+			else if (pos->value.size() == 3 && flag == 1)
+			{
+				int count = 0;
+				if (k < pos->value[0] && count != 1)
+				{
+					if (pos->child_state == 0)
+					{
+						pos->add_value(k);
+						break;
+					}
+					else
+					{
+						pos = pos->child[0];
+						count = 1;
+					}
+				}
+				if (count != 1)
+				{
+					if (pos->value[0] <= k && k < pos->value[1] && count != 1)
+					{
+						if (pos->child_state == 0)
+						{
+							pos->add_value(k);
+							break;
+						}
+						else
+						{
+							pos = pos->child[1];
+							count = 1;
+						}
+					}
+				}
+				if (count != 1)
+				{
+					if (pos->value[1] <= k && k < pos->value[2] && count != 1)
+					{
+						if (pos->child_state == 0)
+						{
+							pos->add_value(k);
+							break;
+						}
+						else
+						{
+							pos = pos->child[2];
+							count = 1;
+						}
+					}
+				}
+
+				if (count != 1)
+				{
+					if (pos->value[2] <= k && count != 1)
+					{
+						if (pos->child_state == 0)
+						{
+							pos->add_value(k);
+							break;
+						}
+						else
+						{
+							pos = pos->child[3];
+							count = 1;
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+void two34_tree::break_3_value_node(node * p)
+{
+	if (p == root && p->child_state == 0)
+	{
+		sort(p->value.begin(), p->value.end());
+		node * temp_left_child = new node();
+		node * temp_right_child = new node();
+		temp_left_child->parent = root;
+		temp_left_child->value.push_back(root->value[0]);
+		temp_left_child->child_state = 0;
+		root->child_state += 1;
+		root->child.push_back(temp_left_child);
+		temp_right_child->parent = root;
+		temp_right_child->value.push_back(root->value[2]);
+		temp_right_child->child_state = 0;
+		root->child_state += 1;
+		root->child.push_back(temp_right_child);
+		int temp_value = p->value[1];
+		root->value.pop_back();
+		root->value.pop_back();
+		root->value.pop_back();
+		p->value.push_back(temp_value);
+	}
+	else if (p->child_state == 0)
+	{
+		sort(p->value.begin(), p->value.end());
+		p->parent->value.push_back(p->value[1]);
+		sort(p->parent->value.begin(), p->parent->value.end());
+		node * temp_right_child = new node();
+		temp_right_child->value.push_back(p->value[2]);
+		temp_right_child->child_state = 0;
+		temp_right_child->parent = p->parent;
+		p->parent->child.push_back(temp_right_child);
+		p->parent->child_state += 1;
+		p->value.pop_back();
+		p->value.pop_back();//liu 0
+		//sort(p->parent->child.begin(), p->parent->child.end());
+		if (p->parent->child.size() == 3)
+		{
+			if (p->parent->child[1]->value[0] > p->parent->child[2]->value[0])
+			{
+				node * temp_small = p->parent->child[2];
+				node * temp_big = p->parent->child[1];
+				p->parent->child.pop_back();
+				p->parent->child.pop_back();
+				p->parent->child.push_back(temp_small);
+				p->parent->child.push_back(temp_big);
+			}
+		}
+		if (p->parent->child.size() == 4)
+		{
+			if (p->parent->child[2]->value[0] > p->parent->child[3]->value[0])
+			{
+				node * temp_small = p->parent->child[3];
+				node * temp_big = p->parent->child[2];
+				p->parent->child.pop_back();
+				p->parent->child.pop_back();
+				p->parent->child.push_back(temp_small);
+				p->parent->child.push_back(temp_big);
+			}
+		}
+
+	}
+	else if (p->value.size() == 3 && p->child_state == 4)
+	{
+		node * temp_right = new node();
+		node * temp_left = new node();
+		sort(p->value.begin(), p->value.end());
+		temp_right->value.push_back(p->value[2]);
+		temp_left->value.push_back(p->value[0]);
+		int temp_mid = p->value[1];
+		p->value.pop_back();
+		p->value.pop_back();
+		p->value.pop_back();
+		p->value.push_back(temp_mid);
+		temp_right->parent = p;
+		temp_left->parent = p;
+		temp_left->child.push_back(p->child[0]);
+		temp_left->child.push_back(p->child[1]);
+		temp_right->child.push_back(p->child[2]);
+		temp_right->child.push_back(p->child[3]);
+		p->child[0]->parent = temp_left;
+		p->child[1]->parent = temp_left;
+		p->child[2]->parent = temp_right;
+		p->child[3]->parent = temp_right;
+		p->child.pop_back();
+		p->child.pop_back();
+		p->child.pop_back();
+		p->child.pop_back();
+		p->child.push_back(temp_left);
+		p->child.push_back(temp_right);
+		p->child_state = 2;
+		temp_left->child_state = 2;
+		temp_right->child_state = 2;
+
+	}
+	else
+	{
+		sort(p->value.begin(), p->value.end());
+		node * temp_new_parent = new node();
+		temp_new_parent->value.push_back(p->value[1]);
+		temp_new_parent->parent = p->parent;
+		p->parent = temp_new_parent;
+		node * temp_right_child = new node();
+		temp_right_child->value.push_back(p->value[2]);
+		temp_right_child->parent = temp_new_parent;
+		temp_right_child->child.push_back(p->child[2]);
+		temp_right_child->child_state += 1;
+		temp_right_child->child.push_back(p->child[3]);
+		temp_right_child->child_state += 1;
+		p->child.pop_back();
+		p->child_state -= 1;
+		p->child.pop_back();
+		p->child_state -= 1;
+		p->value.pop_back();
+		p->value.pop_back();
+
+	}
+}
+void two34_tree::in_order_traversal(node * p) {
+	
+	node * p1 = p;
+	int i;
+	if (p1->child.size() == 0)
+	{
+		for( i =0 ;i< p1->value.size();i++)
+		cout << "  " << p1->value[i] << "  " << "child_state = " << p1->child_state;
+		return;
+	}
+	else
+	{
+		for (i = 0; i < p1->value.size(); i++) {
+			if (p1->child.size() != 0)
+			{
+				in_order_traversal(p1->child[i]);
+			}
+			cout << "  " << p1->value[i] << "  " << "child_state = " << p1->child_state;
+		}
+	}
+	if (p1->child.size() != 0)
+	{
+		in_order_traversal(p1->child[i]);
+	}
+	cout << endl;
+}
+
+
+
+int main() {
+	//The following is just an example.
+	//Different test casess can be used during grading.
+
+	two34_tree t1;
+	t1.add(40);
+	t1.add(30);
+	t1.add(20);
+	t1.in_order_traversal(t1.root);
+	t1.add(100);
+	t1.add(120);
+	t1.in_order_traversal(t1.root);
+	t1.add(200);
+	t1.in_order_traversal(t1.root);
+	t1.add(400);
+	t1.in_order_traversal(t1.root);
+	t1.add(600);
+	t1.in_order_traversal(t1.root);
+	t1.add(800);
+	t1.in_order_traversal(t1.root);
+	t1.add(100); 
+	t1.add(100);
+	t1.in_order_traversal(t1.root);
+	t1.add(100); 
+	t1.add(100);
+	t1.in_order_traversal(t1.root);
+	t1.add(100);
+	t1.add(100);
+	t1.in_order_traversal(t1.root);
+	getchar();
+	getchar();
+	return 0;
+
+}

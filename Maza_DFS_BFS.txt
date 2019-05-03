@@ -1,0 +1,223 @@
+//Due: Monday (9/24) at 11:59pm
+
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <stack>
+
+using namespace std;
+
+class pos {
+public:
+    int id;//0...63
+    bool visited;
+    bool in_wait;
+    int from_id;
+    pos() { id = -1; visited = false; in_wait = false; from_id = -1; }
+    int move(int k) {
+		//For this move direction (1 ... 8)
+		//return the new_id once a move is made
+		//or any illeagal value not in 0...63 
+		int move_x = id % 8+1, move_y = id / 8+1;
+		switch (k)
+		{
+		
+			case 1:
+			{
+				move_x = move_x + 2;
+				move_y = move_y - 1;
+				break;
+			}
+			case 2:
+			{
+				move_x = move_x + 1;
+				move_y = move_y - 2;
+				break;
+			}
+			case 3:
+			{
+				move_x = move_x - 1;
+				move_y = move_y - 2;
+					break;
+			}
+			case 4:
+			{
+				move_x = move_x - 2;
+				move_y = move_y - 1;
+				break;
+			}
+			case 5:
+			{
+				move_x = move_x - 2;
+				move_y = move_y + 1;
+				break;
+			}
+			case 6:
+			{
+				move_x = move_x - 1;
+				move_y = move_y + 2;
+				break;
+			}	
+			case 7:
+			{
+				move_x = move_x + 1;
+				move_y = move_y + 2;
+				break;
+			}
+			case 8:
+			{
+				move_x=move_x + 2;
+				move_y=move_y + 1;
+				break;
+			}
+		}
+		if (move_x < 1 || move_x >8 || move_y <1 || move_y >8) return -1;
+		return (move_y-1)*8+move_x-1;
+	}
+};
+
+void print_path(vector<pos> &board, int k);
+void data_input(int &start_id, int &end_id);
+void BFS(vector<pos> &board, int &start_id, int &end_id);
+void DFS(vector<pos> &board, int &start_id, int &end_id);
+
+//You are not allowed to modify main or class pos.
+//For class pos, you need to implement move functiion
+//will explain this in class.
+int main() {
+    vector<pos> board(64);
+    for (int i = 0; i < 64; i++) board[i].id = i;
+    //queue<int> Queue;
+    int start_id = -1, end_id = -1; //legal values are 0 ... 63
+    data_input(start_id, end_id);
+	 BFS(board, start_id, end_id);
+    for (int i = 0; i < 64; i++) {
+        board[i].id = i;
+        board[i].visited = false;
+        board[i].in_wait = false;
+        board[i].from_id = -1;
+    }
+    DFS(board, start_id, end_id);
+    
+    getchar();
+    getchar();
+    return 0;
+}
+
+void data_input(int &start_id, int &end_id) {
+	
+	int start_id_y,end_id_y;
+	char start_id_x,end_id_x;
+	cout << "Enter starting position --  x is in a ... h and y is in 1 ... 8"<<endl;
+    cin >> start_id_x >> start_id_y;
+	cout << "Enter ending position --  x is in a ... h and y is in 1 ... 8"<<endl;
+	cin >> end_id_x >> end_id_y;
+	start_id = ((int)start_id_x-97) * 8 + start_id_y;
+	end_id =((int)end_id_x-97) * 8 + end_id_y;
+    //stard_id, end_id will be in 0 ... 63
+}
+
+void BFS(vector<pos> &board, int &start_id, int &end_id) {
+    int pop_bfs = -1;
+    queue <int> bfs_stack;
+    bfs_stack.push(start_id);
+	board[start_id].in_wait = true;
+	while(bfs_stack.empty()!= true)
+	{
+		pop_bfs = bfs_stack.front();
+		board[start_id].in_wait = false;
+		board[start_id].visited = true;
+		bfs_stack.pop();
+		if(pop_bfs == end_id) break;
+		for ( int i = 1; i < 9 ;i++)
+		{
+			int loop_temp;
+			loop_temp = board[pop_bfs].move(i);
+			if(loop_temp >= 0 && loop_temp <= 63)
+			{
+				if(board[loop_temp].visited != true && board[loop_temp].in_wait != true)
+				{
+					board[loop_temp].in_wait=true;
+					board[loop_temp].from_id=pop_bfs;
+					bfs_stack.push(loop_temp);
+				}
+			}
+		}
+	}
+	if(pop_bfs == end_id) 
+		print_path(board, pop_bfs);
+	else 
+		cout<< "there is no solution"<<endl;   // Your code here.
+    //If you find no solution, print the following
+    //cout << "No solution is possible" << endl;
+}
+
+
+void DFS(vector<pos> &board, int &start_id, int &end_id) {
+    int pop_dfs = -1;
+    stack<int> dfs_stack;
+    board[start_id].in_wait = true;
+    dfs_stack.push(start_id);
+    while(dfs_stack.empty() != true )
+    {
+        pop_dfs = dfs_stack.top();
+        board[pop_dfs].visited = true;
+		board[pop_dfs].in_wait = false;
+        dfs_stack.pop();
+		if (pop_dfs == end_id) break;
+        for (int i=1 ; i < 9; i++)
+        {
+            int loop_temp;
+        	loop_temp = board[pop_dfs].move(i);
+			if (loop_temp>= 0 && loop_temp<= 63)
+			{
+				if(board[loop_temp].visited != true && board[loop_temp].in_wait != true)
+            	{
+                board[loop_temp].in_wait = true;
+				board[loop_temp].from_id = pop_dfs;
+                dfs_stack.push(loop_temp);
+            	}
+			}	
+        }
+	}
+	if (pop_dfs == end_id)
+		print_path(board,pop_dfs);
+	else
+		cout << "there is no solotion" << endl; 
+
+    // Your code here.
+    //If you find no solution, print the following
+    //cout << "No solution is possi1ble" << endl;
+}
+
+
+void print_path(vector<pos> &board, int k) {
+    //In both DFS and BFS, when the target postion is reached, this function will be called.
+	char output[] = {'a','b','c','d','e','f','g','h'};
+	cout << "Target is reached!"<< endl;
+	cout <<"("<< output[k/8]<<","<<k%8<<")";
+	while (board[k].from_id != -1)
+	{
+		cout <<" <-- "<<"("<<output[board[k].from_id/8]<<","<<board[k].from_id%8 << ")";
+		k = board[k].from_id;
+	}
+	cout << endl;
+        //Your code
+}
+
+//The following is a sample screenshot.  You have to ensure that your output format is idential to it.
+
+/*
+ Enter starting position --  x is in a ... h and y is in 1 ... 8
+ b 3
+ Enter ending position -- x is in a ... h and y is in 1 ... 8
+ f 2
+ 
+ Target is reached!
+ (f,2) <-- (e,4) <-- (d,2) <-- (b,3)
+ 
+ Target is reached!
+ (f,2) <-- (d,1) <-- (c,3) <-- (a,2) <-- (b,4) <-- (a,6) <-- (c,7) <-- (a,8) <-- (b,6) <-- (c,4) <-- (e,5) <-- (g,6) <-- (f,8) <-- (h,7) <-- (f,6) <-- (g,8) <-- (h,6) <-- (f,5) <-- (d,4) <-- (b,3)
+ 
+ */
+
